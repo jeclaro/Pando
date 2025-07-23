@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pando</title>
+<style>
+body {font-family: Arial, sans-serif; margin: 0; padding: 0;}
+nav {background: #333; color:white; padding:1rem;}
+nav a {color:white; margin-right:1rem; text-decoration:none;}
+section {padding:1rem;}
+</style>
+</head>
+<body>
+<nav>
+<a href="#goals">Goals</a>
+<a href="#projects">Projects</a>
+<a href="#tasks">Tasks</a>
+<a href="#notes">Notes</a>
+<a href="#calendar">Calendar</a>
+</nav>
+<section id="content"></section>
+<script>
+const sections = ['goals','projects','tasks','notes','events'];
+function loadSection(section) {
+  fetch(`/api/${section}`).then(r=>r.json()).then(data=>{
+    const el = document.getElementById('content');
+    el.innerHTML = `<h2>${section.charAt(0).toUpperCase()+section.slice(1)}</h2>` +
+      '<ul>' + data.map(item=>`<li>${item.name || item.title}</li>`).join('') + '</ul>' +
+      `<form id="addForm">
+        <input name="name" placeholder="New ${section}" required>
+        <button>Add</button>
+      </form>`;
+    document.getElementById('addForm').onsubmit = e => {
+      e.preventDefault();
+      const name = e.target.name.value;
+      fetch(`/api/${section}`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({name})
+      }).then(()=>loadSection(section));
+    };
+  });
+}
+window.addEventListener('hashchange',()=>{
+  const section = location.hash.substring(1) || 'goals';
+  loadSection(section);
+});
+if(!location.hash) location.hash='goals'; else loadSection(location.hash.substring(1));
+</script>
+</body>
+</html>
